@@ -1,0 +1,90 @@
+{
+  "common": {
+    "Guppy": {
+      "min_size": 1,
+      "max_size": 2,
+      "spawn_rate": 9,
+      "value": 7,
+      "class": "smol",
+      "image": "https://mrfishkeeper.com/wp-content/uploads/2019/07/Guppy-baby-Fry.jpg"
+    },
+    "Sea Bass": {
+      "min_size": 20,
+      "max_size": 35,
+      "spawn_rate": 22,
+      "value": 22,
+      "class": "stupid",
+      "image": "https://www.aquariumofpacific.org/images/made/images/olc/White_Sea_Bass_Swimming_900_900_506_80auto_s.jpg"
+    },
+    "Flounder": {
+      "min_size": 8,
+      "max_size": 24,
+      "spawn_rate": 10,
+      "value": 14,
+      "class": "ocean",
+      "image": "https://www.nationalgeographic.com/content/dam/news/2016/08/12/WAQflounders/01WAQflounders.ngsversion.1471091402048.adapt.1900.1.jpg"
+    },
+    "Frog": {
+      "min_size": 2,
+      "max_size": 5,
+      "spawn_rate": 2,
+      "value": 23,
+      "class": "smol",
+      "image": "https://i.redd.it/szkre5h6c7131.jpg"
+    }
+  },
+
+  "rare": {
+    "Poop": {
+      "min_size": 20,
+      "max_size": 35,
+      "spawn_rate": 2,
+      "value": 1,
+      "class": "stupid",
+      "image": "https://ih1.redbubble.net/image.366039979.8508/st,small,507x507-pad,600x600,f8f8f8.u8.jpg"
+    },
+    "Blob fish": {
+      "min_size": 10,
+      "max_size": 12,
+      "spawn_rate": 3,
+      "value": 20,
+      "class": "ocean",
+      "image": "https://thumbs-prod.si-cdn.com/MDU2xZ_XflVMF5zeHM1yP3SOsqo=/800x600/filters:no_upscale()/https://public-media.si-cdn.com/filer/Blobfish-ugly-470.jpg"
+    },
+    "Koi": {
+      "min_size": 12,
+      "max_size": 15,
+      "spawn_rate": 15,
+      "value": 16,
+      "class": "pond",
+      "image": "https://image-files-nextdaykoiinc.netdna-ssl.com/wp-content/uploads/2015/06/post/NDK_SingleKoiFlower.jpg"
+    },
+    "Beluga Sturgeon": {
+      "min_size": 244,
+      "max_size": 288,
+      "spawn_rate": 1,
+      "value": 21,
+      "class": "river",
+      "image": "https://rf4game.com/forum/uploads/monthly_2018_12/beluga.png.8fa82bc277cd88893ec5463b3c3ec887.png"
+    },
+    "American Eel": {
+      "min_size": 18,
+      "max_size": 22,
+      "spawn_rate": 12,
+      "value": 14,
+      "class": "river",
+      "image": "https://www.solitudelakemanagement.com/hs-fs/hub/227988/file-586746950-jpg/keatons_lake_electrofishing_eel_c.jpg?width=450&name=keatons_lake_electrofishing_eel_c.jpg"
+    }
+  },
+  
+  "abyssal": {
+    "Fishy Cracker": {
+      "min_size": 0,
+      "max_size": 1,
+      "spawn_rate": 1,
+      "value": 100,
+      "class": "smol",
+      "image": "https://i1.wp.com/www.johnsonbecker.com/wp-content/uploads/2018/07/Goldfish-Crackers-Recall-Lawsuit.jpg?fit=1100%2C733&ssl=1"
+    }
+  }
+}
