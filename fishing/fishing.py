@@ -589,8 +589,3 @@ class Fishing(commands.Cog):
         await self.config.member(member if not member == None else ctx.message.author).currently_fishing.set(False)
         await ctx.send('Fishing cooldown reset')
     #endregion
-
-    #delete me
-    @commands.command()
-    async def add(self, ctx, numb:int):
-        await bank.deposit_credits(ctx.message.author, numb)
