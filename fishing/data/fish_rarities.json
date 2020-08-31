@@ -3,34 +3,79 @@
     "Guppy": {
       "min_size": 1,
       "max_size": 2,
-      "spawn_rate": 9,
       "value": 7,
-      "class": "smol",
+      "school": "smol",
       "image": "https://mrfishkeeper.com/wp-content/uploads/2019/07/Guppy-baby-Fry.jpg"
     },
     "Sea Bass": {
       "min_size": 20,
       "max_size": 35,
-      "spawn_rate": 22,
       "value": 22,
-      "class": "stupid",
+      "school": "stupid",
       "image": "https://www.aquariumofpacific.org/images/made/images/olc/White_Sea_Bass_Swimming_900_900_506_80auto_s.jpg"
     },
     "Flounder": {
       "min_size": 8,
       "max_size": 24,
-      "spawn_rate": 10,
       "value": 14,
-      "class": "ocean",
+      "school": "ocean",
       "image": "https://www.nationalgeographic.com/content/dam/news/2016/08/12/WAQflounders/01WAQflounders.ngsversion.1471091402048.adapt.1900.1.jpg"
     },
     "Frog": {
       "min_size": 2,
       "max_size": 5,
-      "spawn_rate": 2,
       "value": 23,
-      "class": "smol",
+      "school": "smol",
       "image": "https://i.redd.it/szkre5h6c7131.jpg"
+    },
+    "Beans": {
+      "min_size": 4,
+      "max_size": 6,
+      "value": 5,
+      "school": "trash",
+      "image": "https://previews.123rf.com/images/gavran333/gavran3331406/gavran333140600038/29228530-open-tin-can-of-beans-isolated-on-white.jpg"
+    },
+    "Octopus": {
+      "min_size": 48,
+      "max_size": 55,
+      "value": 4,
+      "school": "tentacle bois",
+      "image": "https://static.scientificamerican.com/sciam/cache/file/AB921605-B94F-4D2A-A1798DD43488550D_source.jpg"
+    },
+    "Jellyfish": {
+      "min_size": 1,
+      "max_size": 16,
+      "value": 8,
+      "school": "the sandwich",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn%3AANd9GcRkFSVgUc2sMmLZnUTIuX7nkIUt9ZEqka6fAQ&usqp=CAU"
+    },
+    "Soggy Bread": {
+      "min_size": 10,
+      "max_size": 12,
+      "value": 15,
+      "school": "the sandwich",
+      "image": "https://i.redd.it/1gbh9jx9w1741.jpg"
+    },
+    "Goldfish": {
+      "min_size": 4,
+      "max_size": 8,
+      "value": 4,
+      "school": "smol",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/%E3%83%AF%E3%82%AD%E3%83%B320120701.JPG/375px-%E3%83%AF%E3%82%AD%E3%83%B320120701.JPG"
+    },
+    "Flushed Goldfish": {
+      "min_size": 4,
+      "max_size": 8,
+      "value": 20,
+      "school": "trash",
+      "image": "https://i.pinimg.com/originals/a4/d9/bd/a4d9bd09749047dc410209abfb5bfd01.jpg"
+    },
+    "Straw": {
+      "min_size": 6,
+      "max_size": 10,
+      "value": 1,
+      "school": "trash",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Eight_drinking_straws_%284273846588%29.jpg/1200px-Eight_drinking_straws_%284273846588%29.jpg"
     }
   },
 
@@ -38,42 +83,86 @@
     "Poop": {
       "min_size": 20,
       "max_size": 35,
-      "spawn_rate": 2,
       "value": 1,
-      "class": "stupid",
+      "school": "stupid",
       "image": "https://ih1.redbubble.net/image.366039979.8508/st,small,507x507-pad,600x600,f8f8f8.u8.jpg"
     },
     "Blob fish": {
       "min_size": 10,
       "max_size": 12,
-      "spawn_rate": 3,
       "value": 20,
-      "class": "ocean",
+      "school": "ocean",
       "image": "https://thumbs-prod.si-cdn.com/MDU2xZ_XflVMF5zeHM1yP3SOsqo=/800x600/filters:no_upscale()/https://public-media.si-cdn.com/filer/Blobfish-ugly-470.jpg"
     },
     "Koi": {
       "min_size": 12,
       "max_size": 15,
-      "spawn_rate": 15,
       "value": 16,
-      "class": "pond",
+      "school": "pond",
       "image": "https://image-files-nextdaykoiinc.netdna-ssl.com/wp-content/uploads/2015/06/post/NDK_SingleKoiFlower.jpg"
     },
     "Beluga Sturgeon": {
       "min_size": 244,
       "max_size": 288,
-      "spawn_rate": 1,
       "value": 21,
-      "class": "river",
+      "school": "river",
       "image": "https://rf4game.com/forum/uploads/monthly_2018_12/beluga.png.8fa82bc277cd88893ec5463b3c3ec887.png"
     },
     "American Eel": {
       "min_size": 18,
       "max_size": 22,
-      "spawn_rate": 12,
       "value": 14,
-      "class": "river",
+      "school": "river",
       "image": "https://www.solitudelakemanagement.com/hs-fs/hub/227988/file-586746950-jpg/keatons_lake_electrofishing_eel_c.jpg?width=450&name=keatons_lake_electrofishing_eel_c.jpg"
+    },
+    "Octavian": {
+      "min_size": 48,
+      "max_size": 55,
+      "value": 18,
+      "school": "animal crossing",
+      "image": "https://giantbomb1.cbsistatic.com/uploads/scale_small/0/1992/3166161-screen%20shot%202020-02-10%20at%209.48.33%20pm.png"
+    },
+    "Zucker": {
+      "min_size": 48,
+      "max_size": 55,
+      "value": 22,
+      "school": "animal crossing",
+      "image": "https://images2.minutemediacdn.com/image/upload/c_fill,w_720,ar_3:4,f_auto,q_auto,g_auto/shape/cover/sport/dataimagepngbase64UklGRsauBABXRUJQVlA4WAoAAAAQAAAA-8f265c4cce78ce175e8da5dfebd98c6c.jpg"
+    },
+    "Squid": {
+      "min_size": 20,
+      "max_size": 26,
+      "value": 38,
+      "school": "ocean",
+      "image": "https://static01.nyt.com/images/2019/03/26/science/07TB-SQUID/07TB-SQUID-superJumbo.jpg"
+    },
+    "Jamfish": {
+      "min_size": 1,
+      "max_size": 16,
+      "value": 50,
+      "school": "the sandwich",
+      "image": "https://cdn-b.william-reed.com/var/wrbm_gb_hospitality/storage/images/publications/hospitality/bighospitality.co.uk/article/2017/11/16/should-chefs-be-putting-jellyfish-on-their-menus/2680611-1-eng-GB/Should-chefs-be-putting-jellyfish-on-their-menus_wrbm_large.jpg"
+    },
+    "Magicarp": {
+      "min_size": 30,
+      "max_size": 38,
+      "value": 25,
+      "school": "pokemon",
+      "image": "https://gameranx.com/wp-content/uploads/2020/01/PokemonSwordShield-Magikarp.jpg"
+    },
+    "Turtle": {
+      "min_size": 72,
+      "max_size": 87,
+      "value": 15,
+      "school": "land swimmers",
+      "image": "https://www.nwf.org/-/media/NEW-WEBSITE/Shared-Folder/Wildlife/Reptiles/reptile_leatherback-sea-turtle_600x300.ashx"
+    },
+    "Penguin" : {
+      "min_size": 40,
+      "max_size": 50,
+      "value": 35,
+      "school": "land swimmers",
+      "image": "http://animalia.bio/uploads/animals/photos/full/1.25x1/emperor-penguins-15.jpg"
     }
   },
   
@@ -81,10 +170,51 @@
     "Fishy Cracker": {
       "min_size": 0,
       "max_size": 1,
-      "spawn_rate": 1,
       "value": 100,
-      "class": "smol",
+      "school": "smol",
       "image": "https://i1.wp.com/www.johnsonbecker.com/wp-content/uploads/2018/07/Goldfish-Crackers-Recall-Lawsuit.jpg?fit=1100%2C733&ssl=1"
+    },
+    "Marina": {
+      "min_size": 48,
+      "max_size": 55,
+      "value": 65,
+      "school": "animal crossing",
+      "image": "https://i-ac.db0.company/u/villager/231Marina-hstB8C.png"
+    },
+    "Kraken": {
+      "min_size": 480,
+      "max_size": 600,
+      "value": 50,
+      "school": "tentacle bois",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Colossal_octopus_by_Pierre_Denys_de_Montfort.jpg"
+    },
+    "Gyrados": {
+      "min_size": 250,
+      "max_size": 260,
+      "value": 45,
+      "school": "pokemon",
+      "image": "https://cdn.bulbagarden.net/upload/4/41/130Gyarados.png"
+    },
+    "Confused Aardvark": {
+      "min_size": 40,
+      "max_size": 52,
+      "value": 124,
+      "school": "land swimmers",
+      "image": "https://www.sciencemag.org/sites/default/files/styles/article_main_image_-_1280w__no_aspect_/public/cc_Aadvark-Drinking-Chad-Cocking_16x9.jpg?itok=ZvFUjSMs"
+    },
+    "Speckled Cape Tortoise": {
+      "min_size": 2,
+      "max_size": 3,
+      "value": 84,
+      "school": "land swimmers",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Speckled_Padloper_-_Homopus_Signatus_1.jpg/330px-Speckled_Padloper_-_Homopus_Signatus_1.jpg"
+    },
+    "Klaus": {
+      "min_size": 64,
+      "max_size": 65,
+      "value": 9999,
+      "school": "trash",
+      "image": "https://cdn.discordapp.com/attachments/528861546818961408/745439316301578295/Snapchat-394005445.jpg"
     }
   }
 }
