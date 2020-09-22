@@ -76,6 +76,20 @@
       "value": 1,
       "school": "trash",
       "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Eight_drinking_straws_%284273846588%29.jpg/1200px-Eight_drinking_straws_%284273846588%29.jpg"
+    },
+    "Stego Nuggy": {
+      "min_size": 2,
+      "max_size": 3,
+      "value": 42,
+      "school": "dino nuggies",
+      "image": "https://ih1.redbubble.net/image.457585661.7174/st,small,507x507-pad,600x600,f8f8f8.u3.jpg"
+    },
+    "Pata Nuggy": {
+      "min_size": 2,
+      "max_size": 3,
+      "value": 43,
+      "school": "dino nuggies",
+      "image": "https://ih1.redbubble.net/image.332341339.5199/st,small,507x507-pad,600x600,f8f8f8.jpg"
     }
   },
 
@@ -163,6 +177,27 @@
       "value": 35,
       "school": "land swimmers",
       "image": "http://animalia.bio/uploads/animals/photos/full/1.25x1/emperor-penguins-15.jpg"
+    },
+    "Rex Nuggy": {
+      "min_size": 2,
+      "max_size": 3,
+      "value": 65,
+      "school": "dino nuggies",
+      "image": "https://ih1.redbubble.net/image.520984659.4098/st,small,507x507-pad,600x600,f8f8f8.u1.jpg"
+    },
+    "Dactyl Nuggy": {
+      "min_size": 2,
+      "max_size": 3,
+      "value": 65,
+      "school": "dino nuggies",
+      "image": "https://ih1.redbubble.net/image.676450522.9330/st,small,845x845-pad,1000x1000,f8f8f8.u4.jpg"
+    },
+    "Cera Nuggy": {
+      "min_size": 2,
+      "max_size": 3,
+      "value": 65,
+      "school": "dino nuggies",
+      "image": "https://ih1.redbubble.net/image.520983788.4075/st,small,507x507-pad,600x600,f8f8f8.u2.jpg"
     }
   },
   
@@ -215,6 +250,20 @@
       "value": 9999,
       "school": "trash",
       "image": "https://cdn.discordapp.com/attachments/528861546818961408/745439316301578295/Snapchat-394005445.jpg"
+    },
+    "The Nuggy Squad": {
+      "min_size": 10,
+      "max_size": 14,
+      "value": 93,
+      "school": "dino nuggies",
+      "image": "https://www.yummydinobuddies.com/products/small-dinosaur-shaped.png"
     }
   }
 }
+
+
+
+
+
+
+
