@@ -1,5 +1,5 @@
 import asyncio
-from redbot.core import commands, Config, checks
+from redbot.core import commands, Config, checks, events
 from redbot.core.data_manager import bundled_data_path
 from redbot.core.utils.menus import start_adding_reactions, menu, DEFAULT_CONTROLS
 from redbot.core.utils.predicates import ReactionPredicate
@@ -27,19 +27,24 @@ FISH_WEIGHTS = [35, 11, 1]
 fishing_bait = { 'worm': 0,
                  'fly': 1,
                  'chum' : 2,
-                 'enchanted_nightcrawler': 5,
-                 'master_bait': 10 }
+                 'enchanted nightcrawler': 5,
+                 'master bait': 10 }
 bait_prices = { 'worm': 1,
                 'fly': 3,
                 'chum': 5,
-                'enchanted_nightcrawler': 10,
-                'master_bait': 20 }
+                'enchanted nightcrawler': 10,
+                'master bait': 20 }
 
 class Fishing(commands.Cog):
     fishing_rarities:{str:[FishData]} = {}
     merchant_qualities = {}
     curr_merchants = {}
+    merchant_names = []
+    merchant_wait_times = {}
     fish_schools:{str:[str]} = {}
+
+    #Message formatting
+    longestFishName = 1
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,11 +84,6 @@ class Fishing(commands.Cog):
                                  'rare': 1,
                                  'abyssal': 1,
                                  'non_shop_sell': 0.75,
-                                 'min_merchant_sell': 0.8,
-                                 'max_merchant_sell': 1.75,
-                                 'rod_common': 0,
-                                 'rod_rare': 1,
-                                 'rod_abyssal': 2,
                                  'bait_price': 1000,
                                  'bulk_purchase_mod': .1},
         }
@@ -116,11 +116,20 @@ class Fishing(commands.Cog):
                     else:
                         self.fish_schools[curr_fish['school']].append(fish_name)
 
+                    #For formatting
+                    if len(fish_name) > self.longestFishName:
+                        self.longestFishName = len(fish_name)
+
                 self.fishing_rarities.update({ i:new_fishies })
 
+        self.longestFishName += 1
         self.merchant_qualities = { 'name': fish_names,
                                     'school': schools,
                                     'rarity': FISH_RARITIES }
+
+    def LoadMerchants(self, merchant_data_path):
+        with open(bundled_data_path(self) / merchant_data_path, 'r') as f:
+            self.merchant_names = f.read().split('\n')
 
     #region Helper functions
     async def AddSpecializedChannel(self, guild, channel_id:int, channel_type:str):
@@ -165,52 +174,37 @@ class Fishing(commands.Cog):
         return (await self.config.guild(guild).value_modifiers())[modifier]
     #endregion
 
+    @commands.Cog.listener()
+    async def on_message_without_command(self, message):
+        if message.author.bot:
+            return
+
+        # Check shop generation
+        if await self.IsSpecialized(message.guild, message.channel.id, SHOP_CHANNEL):
+            if self.merchant_wait_times.get(message.guild.id, 0) <= time():
+                await self.RefreshMerchants(message.guild, message.channel)
+
     #region Specialized Channel Moderation
     @commands.command()
-    @checks.admin_or_permissions(manage_guild=True)
-    async def new(self, ctx, channel_name, channel_type):
-        channel_check = utils.get(ctx.guild.channels, name=channel_name)
-        if channel_check:
-            await ctx.send(f'<!{channel_check.id}> already exists! Use `add <channel type>` within the channel to make it a {channel_type}')
-            return
-
-        msg = await ctx.send(f'Are you sure you want to create a new {channel_type} called {channel_name}?')
-
-        start_adding_reactions(msg, ReactionPredicate.YES_OR_NO_EMOJIS)
-        pred = ReactionPredicate.yes_or_no(msg, ctx.author)
-        try:
-            await ctx.bot.wait_for("reaction_add", check=pred, timeout=15)
-        except asyncio.TimeoutError:
-            await ctx.send(f'Channel ({channel_type}) creation request timed out')
-            return
-
-        if pred.result is True:
-            category = utils.get(ctx.guild.categories, name=await self.GetSetting(ctx.guild, 'pool_category'))
-            if category is None:
-                category = await ctx.guild.create_category(await self.GetSetting(ctx.guild, 'pool_category'))
-            newChannel = await ctx.guild.create_text_channel(channel_name, category=category)
-            await self.AddSpecializedChannel(ctx.guild, newChannel.id, channel_type)
-
-            await ctx.send(f'<#{newChannel.id}> created')
-        else:
-            await ctx.send(f'{channel_type} creation request cancelled')
-
-    @commands.command()
     @commands.admin_or_permissions(manage_guild=True)
-    async def add(self, ctx, t):
-        if not t in [POOL_CHANNEL, SHOP_CHANNEL]:
-            await ctx.send(f'{t} is not a valid channel type\n_Channel types:_\npool\nshop')
+    async def register(self, ctx:commands.Context, channel_type):
+        """Designates a channel to be either a pool or a shop, and allow users to fish or sell within them"""
+
+        if not channel_type in [POOL_CHANNEL, SHOP_CHANNEL]:
+            await ctx.send(f'{channel_type} is not a valid channel type\n_Channel types:_\npool\nshop')
 
         channel_type = await self.GetChannelType(ctx.guild, ctx.channel.id)
         if channel_type == 'none':
-            await self.AddSpecializedChannel(ctx.guild, ctx.channel.id, t)
-            await ctx.send(f'<#{ctx.channel.id}> is now a {t}!')
+            await self.AddSpecializedChannel(ctx.guild, ctx.channel.id, channel_type)
+            await ctx.send(f'<#{ctx.channel.id}> is now a {channel_type}!')
         else:
             await ctx.send(f'<#{ctx.channel.id}> is already a {channel_type}!')
 
     @commands.command()
     @checks.admin_or_permissions(manage_guild=True)
-    async def rem(self, ctx):
+    async def deregister(self, ctx:commands.Context):
+        """Removes a specialization from a channel"""
+
         if await self.IsSpecialized(ctx.guild, ctx.channel.id):
             channels = await self.config.guild(ctx.guild).channels()
             t = channels.pop(str(ctx.channel.id))
@@ -220,22 +214,28 @@ class Fishing(commands.Cog):
             await ctx.send(f'<#{ctx.channel.id}> was never specialized!')
 
     @commands.command()
-    async def checktype(self, ctx):
+    async def checktype(self, ctx:commands.Context):
+        """Displays if a channel has been registered as a type or is a normal channel"""
+
         t = await self.GetChannelType(ctx.guild, ctx.channel.id)
         if t == 'none':
             await ctx.send(
-                f'<#{ctx.channel.id}> is a normal channel (use `add <channel type>` to make this a specialized channel)')
+                f'<#{ctx.channel.id}> is a normal channel (use `register <channel type>` to make this a specialized channel)')
         else:
             await ctx.send(f'<#{ctx.channel.id}> is a {t}')
     #endregion
 
     #region Fishing
     @commands.command()
-    async def bucket(self, ctx, member: Member = None):
+    async def bucket(self, ctx:commands.Context, member: Member = None):
+        """Show the fish a specific member has caught"""
+
         await self.bucketsort(ctx, '', '', member)
 
     @commands.command()
-    async def bucketsort(self, ctx, sort_type:str, sort_parameter:str, member:Member = None):
+    async def bucketsort(self, ctx:commands.Context, sort_type:str, sort_parameter:str, member:Member = None):
+        """Shows the fish of a specific category (name, school, or rarity) a specific member has caught"""
+
         if not sort_type in ['name', 'school', 'rarity', '']:
             await ctx.send(f'{sort_type} must be one of the following:\n```name\nschool\nrarity```')
             return
@@ -265,16 +265,12 @@ class Fishing(commands.Cog):
 
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=45)
 
-    @commands.command()
-    async def cast(self, ctx, bait_type:str):
-        if not await self.IsSpecialized(ctx.guild, ctx.channel.id, POOL_CHANNEL):
-            return
-        profile = self.config.member(ctx.message.author)
 
+    async def startfishing(self, ctx:commands.Context, profile, bait_type):
         if fishing_bait.get(bait_type) is None:
             await ctx.send(f'{bait_type} is not valid bait')
             return
-        elif (await profile.bait()).get(bait_type) == 0:
+        elif (await profile.bait()).get(bait_type) <= 0:
             await ctx.send(f'You\'re all out of {bait_type}. Buy more in the store with `bait <bait_type> <quantity>`')
             return
         baitPower = fishing_bait[bait_type]
@@ -292,6 +288,70 @@ class Fishing(commands.Cog):
         modified_fish_weights = [FISH_WEIGHTS[0],
                                  FISH_WEIGHTS[1] + baitPower + await profile.rod_level() * await self.GetModifier(ctx.guild, 'rod_rare'),
                                  FISH_WEIGHTS[2] + baitPower + await profile.rod_level() * await self.GetModifier(ctx.guild, 'rod_abyssal')]
+        return modified_fish_weights
+
+    @commands.command(aliases=['qcast', 'qc'])
+    async def quickcast(self, ctx:commands.Context, bait_type:str):
+        """Rolls for a fish - similar to cast, but you do not get to choose the fish to reel in, instead instantly rolling and choosing to keep/release a fish
+
+         - Must be used in a channel registered as a pool"""
+
+        if not await self.IsSpecialized(ctx.guild, ctx.channel.id, POOL_CHANNEL):
+            return
+        profile = self.config.member(ctx.message.author)
+
+        modified_fish_weights = await self.startfishing(ctx, profile, bait_type)
+
+        rarity = choices(FISH_RARITIES, modified_fish_weights)[0]
+        rarity_list = self.fishing_rarities.get(rarity)
+        curr_fish = rarity_list[randint(0, len(rarity_list) - 1)] if not await profile.bryan_mode() else self.SEA_BASS
+        new_fish = curr_fish.ToFishCatch(RARITY_VALUES[rarity])
+
+        embed = Embed(title=f'{ctx.message.author.display_name} cast their rod into the shimmering waves at {ctx.channel}', color=0x7300ff)
+        embed.set_footer(text=f'You pulled a {new_fish["name"]} ({new_fish["size"]} inches) out of the water!\nDo you want to keep or release?')
+        embed.set_thumbnail(url=curr_fish.image)
+        msg = await ctx.send(embed=embed)
+        start_adding_reactions(msg, ['🥤', '🐟'])
+
+        pred = ReactionPredicate.with_emojis(['🥤', '🐟'], msg, ctx.author)
+        try:
+            await ctx.bot.wait_for('reaction_add', check=pred, timeout=15)
+        except asyncio.TimeoutError:
+            pred.result = 0
+
+        if pred.result == 0:
+            if await self.AddFish(ctx.message.author, new_fish):
+                embed.set_footer(text=f'{new_fish["name"]} was added to your bucket!')
+            else:
+                embed.set_footer(text=f'Your bucket was full, so you had to release {new_fish["name"]} :(')
+        else:
+            embed.set_footer(text=f'You let {new_fish["name"]} swim away...')
+        await msg.edit(embed=embed)
+        await msg.clear_reactions()
+
+        user_bait = await profile.bait()
+        user_bait[bait_type] -= 1
+        await profile.bait.set(user_bait)
+
+        await profile.currently_fishing.set(False)
+        #if not await profile.mawiam_mode():
+        #await profile.nextcast.set(time() + await self.GetSetting(ctx.guild, 'fishing_delay'))
+
+        await self.CheckSchools(ctx)
+
+    @commands.command()
+    async def cast(self, ctx:commands.Context, bait_type:str):
+        """Rolls for a fish
+          Fish will periodically bite the pole, at which point the message can be reacted to to catch the fish
+          After reeling in the rod, you will have the option to keep or release the fish
+
+         - Must be used in a channel registered as a pool"""
+
+        if not await self.IsSpecialized(ctx.guild, ctx.channel.id, POOL_CHANNEL):
+            return
+        profile = self.config.member(ctx.message.author)
+
+        modified_fish_weights = await self.startfishing(ctx, profile, bait_type)
 
         embed = Embed(title=f'{ctx.message.author.display_name} cast their rod into the shimmering waves at {ctx.channel}', color=0x7300ff)
         embed.set_footer(text='Not even a nibble yet...')
@@ -368,39 +428,61 @@ class Fishing(commands.Cog):
         #if not await profile.mawiam_mode():
         #await profile.nextcast.set(time() + await self.GetSetting(ctx.guild, 'fishing_delay'))
 
+        await self.CheckSchools(ctx)
+
     @commands.command()
-    async def bait(self, ctx):
+    async def bait(self, ctx:commands.Context):
+        """Displays all of the bait in your inventory"""
+
         bait = ''
         member_bait = await self.config.member(ctx.message.author).bait()
         for i in member_bait.keys():
-            bait += f'{i}{" " * (25 - len(i))}{member_bait[i]}\n'
+            if not member_bait[i] == 0:
+                bait += f'{i}{" " * (25 - len(i))}{member_bait[i]}\n'
         await ctx.send(f'You have:\n```{bait[:-1]}```')
     #endregion
 
     #region Shopping
     @commands.command()
     @checks.admin()
-    async def refreshshops(self, ctx):
+    async def forceshopreset(self, ctx:commands.Context):
+        """Allows an admin to skip the merchant cooldown and refresh the current merchants
+
+         - Must be used in a channel registered as a shop"""
+
         if not await self.IsSpecialized(ctx.guild, ctx.channel.id, SHOP_CHANNEL):
             await ctx.send('Cannot refresh the shops here\nUse `add shop` to turn this channel into a shop')
             return
 
-        if not self.curr_merchants.get(ctx.guild.id):
-            self.curr_merchants.update({ ctx.guild.id : [] })
+        await self.RefreshMerchants(ctx.guild, ctx.channel)
+
+    async def RefreshMerchants(self, guild, channel):
+        if not self.curr_merchants.get(guild.id):
+            self.curr_merchants.update({ guild.id : [] })
+            self.merchant_wait_times.update({ guild.id : 0 })
         else:
-            self.curr_merchants[ctx.guild.id] = []
+            self.curr_merchants[guild.id] = []
+        min_wait = await self.GetSetting(guild, 'min_merchant_wait')
+        max_wait = await self.GetSetting(guild, 'max_merchant_wait')
+        self.merchant_wait_times[guild.id] = time() + randint(min_wait, max_wait) * 60 * 60
 
         #for i in range(randint(await self.GetSetting(ctx.guild, 'min_merchants'), await self.GetSetting(ctx.guild, 'max_merchants'))):
         rand_quality_name = choice(list(self.merchant_qualities.keys()))
         rand_quality = self.merchant_qualities[rand_quality_name]
 
-        max_qualities = await self.GetSetting(ctx.guild, 'max_merchant_qualities')
+        max_qualities = await self.GetSetting(guild, 'max_merchant_qualities')
         max_qualities = max_qualities if len(rand_quality) / 2 > max_qualities else int(len(rand_quality) / 2)
 
-        new_merchant = Merchant('We need names', rand_quality_name, sample(rand_quality, randint(1, max_qualities)), 1)
+        rand_mod = float(randint(0, 30) / 10)
+        if rand_mod == 0:
+            rand_mod = 5
+        elif rand_mod <= 1.5:
+            rand_mod = 1
+
+        new_merchant = Merchant(choice(self.merchant_names), rand_quality_name, sample(rand_quality, randint(1, max_qualities)), rand_mod)
         embed = new_merchant.ToEmbed()
-        await ctx.send(embed=embed)
-        self.curr_merchants[ctx.guild.id].append(new_merchant)
+        await channel.send(embed=embed)
+        self.curr_merchants[guild.id].append(new_merchant)
 
     async def CheckMerchants(self, guild, fish):
         mod = await self.GetModifier(guild, 'non_shop_sell')
@@ -411,11 +493,21 @@ class Fishing(commands.Cog):
         return mod
 
     @commands.command()
-    async def sell(self, ctx, name, size):
+    async def sell(self, ctx:commands.Context, name, size):
+        """Sell one fish in your inventory chosen by a specified name and size
+
+         - Prices affected by rarity modifiers"""
+
         await self.sellall(ctx, 'specific', f'{name} {size}')
 
     @commands.command()
-    async def sellall(self, ctx, fish_type:str='', fish_quality:str=''):
+    async def sellall(self, ctx:commands.Context, fish_type:str='', fish_quality:str=''):
+        """Sell all of the fish in your bucket
+
+         - Fish will automatically be sold to valid merchants
+         - Can filter by categories (name, school, or rarity)
+         - Prices affected by rarity modifiers"""
+
         if not fish_type in ['specific', 'name', 'school', 'rarity', '']:
             await ctx.send(f'{fish_type} must be one of the following:\n```name\nschool\nrarity```')
             return
@@ -433,7 +525,7 @@ class Fishing(commands.Cog):
                 mod = await self.CheckMerchants(ctx.guild, i)
                 i["value"] = int(i["value"] * mod * await self.GetModifier(ctx.guild, i['rarity']))
                 total += i["value"]
-                msg += f'{i["name"]}{" " * (12 - len(i["name"]))}{i["value"]} {await bank.get_currency_name(ctx.guild)} ({mod}x)\n'
+                msg += f'{i["name"]}{" " * (self.longestFishName - len(i["name"]))}{i["value"]} {await bank.get_currency_name(ctx.guild)} ({mod}x)\n'
             else:
                 new_fish.append(i)
 
@@ -457,11 +549,16 @@ class Fishing(commands.Cog):
         await msg.clear_reactions()
 
     @commands.command()
-    async def buybait(self, ctx, bait_type:str, quantity:int = 1):
+    async def buybait(self, ctx:commands.Context, quantity:int, *bait_type:str):
+        """Purchase bait to use with cast
+
+         - prices affected by bait_price_mod and bulk_purchase_mod"""
+
         if not await self.IsSpecialized(ctx.guild, ctx.channel.id, SHOP_CHANNEL):
             await ctx.send('Cannot buy bait here\nUse `add shop` to turn this channel into a shop')
             return
 
+        bait_type = ' '.join(bait_type)
         if not bait_type in fishing_bait:
             await ctx.send(f'{bait_type} is not a valid form of bait')
 
@@ -498,7 +595,10 @@ class Fishing(commands.Cog):
 
     #region Schools
     @commands.command()
-    async def schools(self, ctx, member:Member = None):
+    async def schools(self, ctx:commands.Context, member:Member = None):
+        """Display your completion percentage of every school
+        (use the school command to get more detailed information about a specific school)"""
+
         if member is None:
             member = ctx.message.author
 
@@ -528,7 +628,9 @@ class Fishing(commands.Cog):
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=45)
 
     @commands.command()
-    async def school(self, ctx, *school_name):
+    async def school(self, ctx:commands.Context, *school_name):
+        """Display all of your obtained fish in a specific school"""
+
         school_name = ' '.join(school_name)
         if not school_name in list(self.fish_schools.keys()):
             await ctx.send(f'{school_name} is not a valid school')
@@ -542,12 +644,42 @@ class Fishing(commands.Cog):
         embed = Embed(title=school_name, description=description[:-1])
         embed.set_thumbnail(url=schools_image)
         await ctx.send(embed=embed)
+
+    async def CheckSchools(self, ctx:commands.Context):
+        member_schools = await self.config.member(ctx.message.author).schools()
+        total_complete = 0
+        for i in self.fish_schools.keys():
+            if len(self.fish_schools[i]) == len(member_schools.get(i, {})):
+                total_complete += 1
+        percent_complete = total_complete / len(self.fish_schools)
+        level = int(percent_complete / .25)
+
+        if await self.config.member(ctx.message.author).rod_level() < level:
+            await self.config.member(ctx.message.author).rod_level.set(level)
+            await ctx.send(f'You have completed {int(percent_complete * 100)}% of schools and unlocked rod level {level}!')
+
     #endregion
 
     #region Settings
-    @commands.command()
+    @commands.group()
+    async def fishingsettings(self, ctx:commands.Context):
+        """Modify various settings used by fishing"""
+
+    @fishingsettings.command()
     @checks.admin()
-    async def changesetting(self, ctx, setting, new_value: int):
+    async def changesetting(self, ctx:commands.Context, setting, new_value: int):
+        """Change values for timers and similar settings used by the cog
+
+         - bucket_display_length: The number of fish to display per page when using bucket commands
+         - max_fishing_length: The maximum amount of time a cast can last (seconds)
+         - min_fishing_wait: The minimum amount of time for a cast to cycle between a bite and none (seconds)
+         - max_fishing_wait: The maximum amount of time for a cast to cycle between a bite and none (seconds)
+         - min_merchant_wait: The minimum random amount of time before a new merchant appears (hours)
+         - max_merchant_wait: The maximum random amount of time before a new merchant appears (hours)
+         - max_merchant_qualities: The maximum amount of specific fish types a merchant can look for
+         - bait_recovery_chance: The chance for bait to be recovered after fishing
+         - bulk_minimum: The minimum amount of bait to be bought to recieve a bulk discount"""
+
         settings = await self.config.guild(ctx.guild).settings()
 
         if not settings.get(setting):
@@ -558,9 +690,18 @@ class Fishing(commands.Cog):
         await self.config.guild(ctx.guild).settings.set(settings)
         await ctx.send(f'{setting} updated')
 
-    @commands.command()
+    @fishingsettings.command(name="changemodifier")
     @checks.admin()
-    async def changemodifier(self, ctx, mod:str, new_value:int):
+    async def changemodifier(self, ctx:commands.Context, mod:str, new_value:int):
+        """Set modifiers for prices within the cog
+
+         - common: The price modifier for common fish
+         - rare: The price modifier for rare fish
+         - abyssal: The price modifier for abyssal fish
+         - non_shop_sell: The modifier for selling fish to the basic shop
+         - bait_price: The modifier for buying bait
+         - bulk_purchase_mod: The discount for buying bait in bulk (decimal percentage e.g. 0.1 for 10% off)"""
+
         mods = await self.config.guild(ctx.guild).value_modifiers()
 
         if not mods.get(mod):
@@ -571,21 +712,43 @@ class Fishing(commands.Cog):
         await self.config.guild(ctx.guild).value_modifiers().set(mods)
         await ctx.send(f'{mod} modifier was updated')
 
-    @commands.command()
-    @checks.admin()
-    async def mawiammode(self, ctx, member: Member, enabled: bool):
-        await self.config.member(member).mawiam_mode.set(enabled)
-        await ctx.send(f'{member.mention} has mawiam mode set to {enabled}')
+    #@fishingsettings.command()
+    #@checks.admin()
+    #async def mawiammode(self, ctx:commands.Context, member: Member, enabled: bool):
+    #    """Remove fishing cooldowns for a user (currently not in use)"""
+#
+    #    await self.config.member(member).mawiam_mode.set(enabled)
+    #    await ctx.send(f'{member.mention} has mawiam mode set to {enabled}')
 
-    @commands.command()
+    @fishingsettings.command()
     @checks.admin()
-    async def bryanmode(self, ctx, member: Member, enabled: bool):
+    async def bryanmode(self, ctx:commands.Context, member: Member, enabled: bool):
+        """Make a profile catch exclusively Sea Bass"""
+
         await self.config.member(member).bryan_mode.set(enabled)
         await ctx.send(f'{member.mention} has bryan mode set to {enabled}')
 
-    @commands.command()
+    @fishingsettings.command()
     @checks.admin()
-    async def resettimer(self, ctx, member: Member = None):
+    async def resettimer(self, ctx:commands.Context, member: Member = None):
+        """If the cog gets shut down in the middle of a cast a user can get locked out of fishing, this fixes it"""
+
         await self.config.member(member if not member == None else ctx.message.author).currently_fishing.set(False)
         await ctx.send('Fishing cooldown reset')
     #endregion
+
+    #delete me
+    #@commands.command()
+    #async def add(self, ctx:commands.Context, numb:int):
+    #    await bank.deposit_credits(ctx.message.author, numb)
+#
+    #@commands.command()
+    #async def addfish(self, ctx:commands.Context, *fish_name):
+    #    fish_name = ' '.join(fish_name)
+    #    for rarity in self.fishing_rarities:
+    #        for fish in self.fishing_rarities[rarity]:
+    #            if fish.name == fish_name:
+    #                await self.AddFish(ctx.message.author, fish.ToFishCatch(1))
+    #                await ctx.send(f'Added {fish_name}')
+    #                return
+    #    await ctx.send(f'Could not find {fish_name}')
