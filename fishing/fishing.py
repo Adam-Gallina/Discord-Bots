@@ -90,6 +90,7 @@ class Fishing(commands.Cog):
         self.config.register_member(**default_member)
         self.config.register_guild(**default_guild)
 
+    #Reads the information found in data/fish_rarities.json and store it in self.fishing_rarities
     def LoadFish(self, pool_file):
         fish_names = []
         schools = []
@@ -127,6 +128,7 @@ class Fishing(commands.Cog):
                                     'school': schools,
                                     'rarity': FISH_RARITIES }
 
+    #Reads the names in data/merchant_names.txt and stores it in self.merchant_names
     def LoadMerchants(self, merchant_data_path):
         with open(bundled_data_path(self) / merchant_data_path, 'r') as f:
             self.merchant_names = f.read().split('\n')
@@ -185,7 +187,11 @@ class Fishing(commands.Cog):
                 await self.RefreshMerchants(message.guild, message.channel)
 
     #region Specialized Channel Moderation
-    @commands.command()
+    @commands.group()
+    async def managechannels(self, ctx:commands.Context):
+        """Contains commands to register/deregister channels as specialized"""
+
+    @managechannels.command()
     @commands.admin_or_permissions(manage_guild=True)
     async def register(self, ctx:commands.Context, channel_type):
         """Designates a channel to be either a pool or a shop, and allow users to fish or sell within them"""
@@ -200,7 +206,7 @@ class Fishing(commands.Cog):
         else:
             await ctx.send(f'<#{ctx.channel.id}> is already a {channel_type}!')
 
-    @commands.command()
+    @managechannels.command()
     @checks.admin_or_permissions(manage_guild=True)
     async def deregister(self, ctx:commands.Context):
         """Removes a specialization from a channel"""
@@ -213,7 +219,7 @@ class Fishing(commands.Cog):
         else:
             await ctx.send(f'<#{ctx.channel.id}> was never specialized!')
 
-    @commands.command()
+    @managechannels.command()
     async def checktype(self, ctx:commands.Context):
         """Displays if a channel has been registered as a type or is a normal channel"""
 
@@ -226,13 +232,18 @@ class Fishing(commands.Cog):
     #endregion
 
     #region Fishing
-    @commands.command()
+    @commands.group()
+    async def fishing(self, ctx:commands.Context):
+        """Contains commands that allow a user to fish"""
+        pass
+
+    @fishing.command()
     async def bucket(self, ctx:commands.Context, member: Member = None):
         """Show the fish a specific member has caught"""
 
         await self.bucketsort(ctx, '', '', member)
 
-    @commands.command()
+    @fishing.command()
     async def bucketsort(self, ctx:commands.Context, sort_type:str, sort_parameter:str, member:Member = None):
         """Shows the fish of a specific category (name, school, or rarity) a specific member has caught"""
 
@@ -265,7 +276,8 @@ class Fishing(commands.Cog):
 
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=45)
 
-
+    #Checks a given bait_type to be valid/owned by the user
+    #Calculates the modified_fish_weights for use in catching a fish of a randomized type
     async def startfishing(self, ctx:commands.Context, profile, bait_type):
         if fishing_bait.get(bait_type) is None:
             await ctx.send(f'{bait_type} is not valid bait')
@@ -283,14 +295,13 @@ class Fishing(commands.Cog):
             return
 
         await profile.times_fished.set(await profile.times_fished() + 1)
-        await profile.currently_fishing.set(True)
 
         modified_fish_weights = [FISH_WEIGHTS[0],
                                  FISH_WEIGHTS[1] + baitPower + await profile.rod_level() * await self.GetModifier(ctx.guild, 'rod_rare'),
                                  FISH_WEIGHTS[2] + baitPower + await profile.rod_level() * await self.GetModifier(ctx.guild, 'rod_abyssal')]
         return modified_fish_weights
 
-    @commands.command(aliases=['qcast', 'qc'])
+    @fishing.command(aliases=['qcast', 'qc'])
     async def quickcast(self, ctx:commands.Context, bait_type:str):
         """Rolls for a fish - similar to cast, but you do not get to choose the fish to reel in, instead instantly rolling and choosing to keep/release a fish
 
@@ -300,6 +311,7 @@ class Fishing(commands.Cog):
             return
         profile = self.config.member(ctx.message.author)
 
+        await profile.currently_fishing.set(True)
         modified_fish_weights = await self.startfishing(ctx, profile, bait_type)
 
         rarity = choices(FISH_RARITIES, modified_fish_weights)[0]
@@ -339,7 +351,7 @@ class Fishing(commands.Cog):
 
         await self.CheckSchools(ctx)
 
-    @commands.command()
+    @fishing.command()
     async def cast(self, ctx:commands.Context, bait_type:str):
         """Rolls for a fish
           Fish will periodically bite the pole, at which point the message can be reacted to to catch the fish
@@ -351,6 +363,7 @@ class Fishing(commands.Cog):
             return
         profile = self.config.member(ctx.message.author)
 
+        await profile.currently_fishing.set(True)
         modified_fish_weights = await self.startfishing(ctx, profile, bait_type)
 
         embed = Embed(title=f'{ctx.message.author.display_name} cast their rod into the shimmering waves at {ctx.channel}', color=0x7300ff)
@@ -430,7 +443,7 @@ class Fishing(commands.Cog):
 
         await self.CheckSchools(ctx)
 
-    @commands.command()
+    @fishing.command()
     async def bait(self, ctx:commands.Context):
         """Displays all of the bait in your inventory"""
 
@@ -443,7 +456,12 @@ class Fishing(commands.Cog):
     #endregion
 
     #region Shopping
-    @commands.command()
+    @commands.group()
+    async def shopping(self, ctx:commands.Context):
+        """Contains commands to interact with merchants and purchasing bait"""
+        pass
+
+    @shopping.command()
     @checks.admin()
     async def forceshopreset(self, ctx:commands.Context):
         """Allows an admin to skip the merchant cooldown and refresh the current merchants
@@ -492,7 +510,7 @@ class Fishing(commands.Cog):
                     mod = i.sell_mod
         return mod
 
-    @commands.command()
+    @shopping.command()
     async def sell(self, ctx:commands.Context, name, size):
         """Sell one fish in your inventory chosen by a specified name and size
 
@@ -500,7 +518,7 @@ class Fishing(commands.Cog):
 
         await self.sellall(ctx, 'specific', f'{name} {size}')
 
-    @commands.command()
+    @shopping.command()
     async def sellall(self, ctx:commands.Context, fish_type:str='', fish_quality:str=''):
         """Sell all of the fish in your bucket
 
@@ -548,7 +566,7 @@ class Fishing(commands.Cog):
 
         await msg.clear_reactions()
 
-    @commands.command()
+    @shopping.command()
     async def buybait(self, ctx:commands.Context, quantity:int, *bait_type:str):
         """Purchase bait to use with cast
 
@@ -594,7 +612,12 @@ class Fishing(commands.Cog):
     #endregion
 
     #region Schools
-    @commands.command()
+    @commands.group()
+    async def schoolinfo(self, ctx:commands.Context):
+        """Contains commands to look at a users school information"""
+        pass
+
+    @schoolinfo.command()
     async def schools(self, ctx:commands.Context, member:Member = None):
         """Display your completion percentage of every school
         (use the school command to get more detailed information about a specific school)"""
@@ -627,7 +650,7 @@ class Fishing(commands.Cog):
 
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=45)
 
-    @commands.command()
+    @schoolinfo.command()
     async def school(self, ctx:commands.Context, *school_name):
         """Display all of your obtained fish in a specific school"""
 
@@ -657,7 +680,6 @@ class Fishing(commands.Cog):
         if await self.config.member(ctx.message.author).rod_level() < level:
             await self.config.member(ctx.message.author).rod_level.set(level)
             await ctx.send(f'You have completed {int(percent_complete * 100)}% of schools and unlocked rod level {level}!')
-
     #endregion
 
     #region Settings
