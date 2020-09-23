@@ -30,10 +30,10 @@ fishing_bait = { 'worm': 0,
                  'enchanted nightcrawler': 5,
                  'master bait': 10 }
 bait_prices = { 'worm': 1,
-                'fly': 3,
-                'chum': 5,
-                'enchanted nightcrawler': 10,
-                'master bait': 20 }
+                'fly': 4,
+                'chum': 7,
+                'enchanted nightcrawler': 12,
+                'master bait': 25 }
 
 class Fishing(commands.Cog):
     fishing_rarities:{str:[FishData]} = {}
@@ -84,8 +84,9 @@ class Fishing(commands.Cog):
                                  'rare': 1,
                                  'abyssal': 1,
                                  'non_shop_sell': 0.75,
-                                 'bait_price': 1000,
-                                 'bulk_purchase_mod': .1},
+                                 'bait_price': 350,
+                                 'bulk_purchase_mod': .1,
+                                 'school_complete_mod': .25},
         }
         self.config.register_member(**default_member)
         self.config.register_guild(**default_guild)
@@ -232,18 +233,13 @@ class Fishing(commands.Cog):
     #endregion
 
     #region Fishing
-    @commands.group()
-    async def fishing(self, ctx:commands.Context):
-        """Contains commands that allow a user to fish"""
-        pass
-
-    @fishing.command()
+    @commands.command()
     async def bucket(self, ctx:commands.Context, member: Member = None):
         """Show the fish a specific member has caught"""
 
         await self.bucketsort(ctx, '', '', member)
 
-    @fishing.command()
+    @commands.command()
     async def bucketsort(self, ctx:commands.Context, sort_type:str, sort_parameter:str, member:Member = None):
         """Shows the fish of a specific category (name, school, or rarity) a specific member has caught"""
 
@@ -301,7 +297,7 @@ class Fishing(commands.Cog):
                                  FISH_WEIGHTS[2] + baitPower + await profile.rod_level() * await self.GetModifier(ctx.guild, 'rod_abyssal')]
         return modified_fish_weights
 
-    @fishing.command(aliases=['qcast', 'qc'])
+    @commands.command(aliases=['qcast', 'qc'])
     async def quickcast(self, ctx:commands.Context, bait_type:str):
         """Rolls for a fish - similar to cast, but you do not get to choose the fish to reel in, instead instantly rolling and choosing to keep/release a fish
 
@@ -351,7 +347,7 @@ class Fishing(commands.Cog):
 
         await self.CheckSchools(ctx)
 
-    @fishing.command()
+    @commands.command()
     async def cast(self, ctx:commands.Context, bait_type:str):
         """Rolls for a fish
           Fish will periodically bite the pole, at which point the message can be reacted to to catch the fish
@@ -443,7 +439,7 @@ class Fishing(commands.Cog):
 
         await self.CheckSchools(ctx)
 
-    @fishing.command()
+    @commands.command()
     async def bait(self, ctx:commands.Context):
         """Displays all of the bait in your inventory"""
 
@@ -456,12 +452,7 @@ class Fishing(commands.Cog):
     #endregion
 
     #region Shopping
-    @commands.group()
-    async def shopping(self, ctx:commands.Context):
-        """Contains commands to interact with merchants and purchasing bait"""
-        pass
-
-    @shopping.command()
+    @commands.command()
     @checks.admin()
     async def forceshopreset(self, ctx:commands.Context):
         """Allows an admin to skip the merchant cooldown and refresh the current merchants
@@ -510,7 +501,7 @@ class Fishing(commands.Cog):
                     mod = i.sell_mod
         return mod
 
-    @shopping.command()
+    @commands.command()
     async def sell(self, ctx:commands.Context, name, size):
         """Sell one fish in your inventory chosen by a specified name and size
 
@@ -518,13 +509,14 @@ class Fishing(commands.Cog):
 
         await self.sellall(ctx, 'specific', f'{name} {size}')
 
-    @shopping.command()
+    @commands.command()
     async def sellall(self, ctx:commands.Context, fish_type:str='', fish_quality:str=''):
         """Sell all of the fish in your bucket
 
          - Fish will automatically be sold to valid merchants
          - Can filter by categories (name, school, or rarity)
-         - Prices affected by rarity modifiers"""
+         - Sale prices are increased for fish from a school you've completed
+         - Prices affected by rarity modifiers and school_complete_mod"""
 
         if not fish_type in ['specific', 'name', 'school', 'rarity', '']:
             await ctx.send(f'{fish_type} must be one of the following:\n```name\nschool\nrarity```')
@@ -541,6 +533,9 @@ class Fishing(commands.Cog):
                 sell_fish.append(i)
 
                 mod = await self.CheckMerchants(ctx.guild, i)
+                if await self.CompletedSchool(ctx.message.author, i['school']):
+                    mod += await self.GetModifier(ctx.guild, 'school_complete_mod')
+
                 i["value"] = int(i["value"] * mod * await self.GetModifier(ctx.guild, i['rarity']))
                 total += i["value"]
                 msg += f'{i["name"]}{" " * (self.longestFishName - len(i["name"]))}{i["value"]} {await bank.get_currency_name(ctx.guild)} ({mod}x)\n'
@@ -555,6 +550,7 @@ class Fishing(commands.Cog):
             await ctx.bot.wait_for("reaction_add", check=pred, timeout=20)
         except asyncio.TimeoutError:
             await msg.clear_reactions()
+            await msg.edit(content='Sale timed out')
             return
 
         if pred.result is True:
@@ -566,7 +562,7 @@ class Fishing(commands.Cog):
 
         await msg.clear_reactions()
 
-    @shopping.command()
+    @commands.command()
     async def buybait(self, ctx:commands.Context, quantity:int, *bait_type:str):
         """Purchase bait to use with cast
 
@@ -612,12 +608,7 @@ class Fishing(commands.Cog):
     #endregion
 
     #region Schools
-    @commands.group()
-    async def schoolinfo(self, ctx:commands.Context):
-        """Contains commands to look at a users school information"""
-        pass
-
-    @schoolinfo.command()
+    @commands.command()
     async def schools(self, ctx:commands.Context, member:Member = None):
         """Display your completion percentage of every school
         (use the school command to get more detailed information about a specific school)"""
@@ -650,7 +641,7 @@ class Fishing(commands.Cog):
 
         await menu(ctx, embeds, DEFAULT_CONTROLS, timeout=45)
 
-    @schoolinfo.command()
+    @commands.command()
     async def school(self, ctx:commands.Context, *school_name):
         """Display all of your obtained fish in a specific school"""
 
@@ -669,10 +660,9 @@ class Fishing(commands.Cog):
         await ctx.send(embed=embed)
 
     async def CheckSchools(self, ctx:commands.Context):
-        member_schools = await self.config.member(ctx.message.author).schools()
         total_complete = 0
         for i in self.fish_schools.keys():
-            if len(self.fish_schools[i]) == len(member_schools.get(i, {})):
+            if await self.CompletedSchool(ctx.message.author, i):
                 total_complete += 1
         percent_complete = total_complete / len(self.fish_schools)
         level = int(percent_complete / .25)
@@ -680,6 +670,10 @@ class Fishing(commands.Cog):
         if await self.config.member(ctx.message.author).rod_level() < level:
             await self.config.member(ctx.message.author).rod_level.set(level)
             await ctx.send(f'You have completed {int(percent_complete * 100)}% of schools and unlocked rod level {level}!')
+
+    async def CompletedSchool(self, member, school:str):
+        member_schools = await self.config.member(member).schools()
+        return len(self.fish_schools[school]) == len(member_schools.get(school, {}))
     #endregion
 
     #region Settings
@@ -722,7 +716,8 @@ class Fishing(commands.Cog):
          - abyssal: The price modifier for abyssal fish
          - non_shop_sell: The modifier for selling fish to the basic shop
          - bait_price: The modifier for buying bait
-         - bulk_purchase_mod: The discount for buying bait in bulk (decimal percentage e.g. 0.1 for 10% off)"""
+         - bulk_purchase_mod: The discount for buying bait in bulk (decimal percentage e.g. 0.1 for 10% off)
+         - school_complete_mod: The increased sell price for selling a fish in a school you've completed (decimal percentage)"""
 
         mods = await self.config.guild(ctx.guild).value_modifiers()
 
@@ -764,13 +759,13 @@ class Fishing(commands.Cog):
     #async def add(self, ctx:commands.Context, numb:int):
     #    await bank.deposit_credits(ctx.message.author, numb)
 #
-    #@commands.command()
-    #async def addfish(self, ctx:commands.Context, *fish_name):
-    #    fish_name = ' '.join(fish_name)
-    #    for rarity in self.fishing_rarities:
-    #        for fish in self.fishing_rarities[rarity]:
-    #            if fish.name == fish_name:
-    #                await self.AddFish(ctx.message.author, fish.ToFishCatch(1))
-    #                await ctx.send(f'Added {fish_name}')
-    #                return
-    #    await ctx.send(f'Could not find {fish_name}')
+    @commands.command()
+    async def addfish(self, ctx:commands.Context, *fish_name):
+        fish_name = ' '.join(fish_name)
+        for rarity in self.fishing_rarities:
+            for fish in self.fishing_rarities[rarity]:
+                if fish.name == fish_name:
+                    await self.AddFish(ctx.message.author, fish.ToFishCatch(1))
+                    await ctx.send(f'Added {fish_name}')
+                    return
+        await ctx.send(f'Could not find {fish_name}')
