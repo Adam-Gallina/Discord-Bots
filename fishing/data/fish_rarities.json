@@ -111,6 +111,62 @@
       "value": 340,
       "school": "brawlers",
       "image": "https://cdn.hswstatic.com/gif/piranha-1.jpg"
+    },
+    "Cod": {
+      "min_size": 16,
+      "max_size": 20,
+      "value": 330,
+      "school": "ocean",
+      "image": "https://mediad.publicbroadcasting.net/p/nhpr/files/styles/x_large/public/201905/codfish_Atlantic_NOAA.jpg"
+    },
+    "Salmon": {
+      "min_size": 28,
+      "max_size": 30,
+      "value": 320,
+      "school": "ocean",
+      "image": "https://www.fws.gov/fisheries/freshwater-fish-of-america/images/originals/east_cold/Atlantic_salmon_TimKnepp.fw.png"
+},
+    "Halibut": {
+      "min_size": 84,
+      "max_size": 108,
+      "value": 250,
+      "school": "ocean",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Hippoglossus_hippoglossus2.jpg/1200px-Hippoglossus_hippoglossus2.jpg"
+    },
+    "Shrimp": {
+      "min_size": 1,
+      "max_size": 3,
+      "value": 340,
+      "school": "bottom feeders",
+      "image": "https://cdn.shopify.com/s/files/1/1163/2672/products/Sakura-Red-Cherry-Shrimp-5_1024x1024.jpg?v=1551453055"
+    },
+    "Algae Eater": {
+      "min_size": 5,
+      "max_size": 11,
+      "value": 340,
+      "school": "bottom feeders",
+      "image": "https://www.fishkeepingworld.com/wp-content/uploads/2019/09/Chinese-Algae-Eater.jpg"
+    },
+    "Snail": {
+      "min_size": 1,
+      "max_size": 5,
+      "value": 340,
+      "school": "bottom feeders",
+      "image": "https://www.aqueon.com/-/media/images/aqueon-na/us/assets/articles/types%20of%20aquarium%20snails/shutterstock_1325323100.jpg?h=366&w=499&la=en&hash=5F1E37F75A5B9E047F0B0B26D5B59736FB0D95B5"
+    },
+    "Carp": {
+      "min_size": 16,
+      "max_size": 31,
+      "value": 330,
+      "school": "ocean",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Ctenopharyngodon_idella_01_Pengo.jpg/330px-Ctenopharyngodon_idella_01_Pengo.jpg"
+    },
+    "Catfish": {
+      "min_size": 12,
+      "max_size": 24,
+      "value": 330,
+      "school": "ocean",
+      "image": "https://forum.americanexpedition.us/images/channel-catfish/channel-catfish-in-another-tank.jpg"
     }
   },
 
@@ -226,6 +282,20 @@
       "value": 320,
       "school": "among us",
       "image": "https://vignette.wikia.nocookie.net/p__/images/8/84/15F8783A-B9C0-43F4-ABAA-4BF6BC58196B.png/revision/latest?cb=20200911005013&path-prefix=protagonist"
+    },
+    "Blue Tang": {
+      "min_size": 9,
+      "max_size": 12,
+      "value": 345,
+      "school": "movie stars",
+      "image": "https://upload.wikimedia.org/wikipedia/commons/1/13/Paletten-Doktorfisch_M%C3%BCnster.JPG"
+    },
+    "Clownfish": {
+      "min_size": 3,
+      "max_size": 4,
+      "value": 345,
+      "school": "movie stars",
+      "image": "https://cdn.mos.cms.futurecdn.net/4UdEs7tTKwLJbxZPUYR3hF-1200-80.jpg"
     }
   },
   
@@ -302,8 +372,6 @@
     }
   }
 }
-
-
 
 
 
